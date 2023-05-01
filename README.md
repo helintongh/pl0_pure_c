@@ -5,4 +5,4 @@ pl0 compiler writen in C.
 
 [1.编译器整体架构理解](./doc/background.md)
 
-[2.PL/0基础语法以及实现思路]()
+[2.PL/0基础语法以及实现其编译器思路](./doc/pl0_intro.md)
