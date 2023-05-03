@@ -340,9 +340,13 @@ void parse(void)
 	}
 ```
 
+**`ident()`处理保留字和标识符**
+
 接下来，我们处理标识符和保留字，然后是数字。所有标识符都以区分大小写的字母或下划线开头。并且所有保留字都以小写字母开头，所以在扫描整个token之前，无法区分标识符和保留字相关的歧义。因此因此遇到字母和下划线的情况都会通过`ident()`函数识别当前行的代码其为那种token类型。此函数读取所有字母、数字和下划线，直到遇到不属于其中的字符。 为了简单起见，然后回退到标识符的最后一个字符(`--raw;`语句就是干这件事的)（词法分析器的最后一步总是移动到输入缓冲区中的下一个字符，因此通过在这里回滚避免意外跳过标记）
 
 现在需要确定我们拥有的这个token字符串是否是一个保留字。此时迭代保留字列表，如果匹配，我们返回该保留字的正确token类型。如果到达保留字列表末尾且没有匹配项那么其必为标识符(symbol)并报告token类型。
+
+**`number()`函数处理数字变量**
 
 如果词法分析器看到的不是字母或下划线，而是数字，那么我们一定有一个数字变量。根据语法，所有数字都以数字开头，并且是一个或多个数字的序列。我要在这里添加一点扩展。对于非常大的数字，或者可能遵循标准逻辑分组的数字（如美元和美分），最好为 PL/0 程序员提供一种易于人类阅读的数字分隔方式。 正如在 Ada、Java、D、Python 和其他语言中发现的那样，下划线可用于为人类读者分解这些数字。 我认为这是一个很好的补充，所以我们也会这样做。
 
@@ -353,6 +357,51 @@ void parse(void)
 由于PL/0语法有一些不合理之处。使用上面的方法可能无法检测数字是否越界(负数或者正数的越界情况)，这个项目里不关注负数的情况。可以借用Pascal的一个概念通过增加两个新的保留字：`minint`和`maxint`来判断越界情况。
 
 如果词法分析器没有看到字母、数字或下划线，那么一定是符号的情况。如果词法分析器发现任何不是赋值运算符的符号，它会按原样返回该符号，因为在我们的token类型列表中，我们将符号的值作为其 ASCII 字符的值。 换言之符号与其token类型的值将是一样的。 因为我们这样做了，所以我们不需要像读取标识符、保留字和数字那样费心将这些符号读入标记字符串。 仅token类型就已经为我们提供了我们需要了解的有关该符号的所有信息。
+
+当然为了代码更好看`switch-case`语句可以改为如下:
+
+```c
+switch (*raw) {
+    case '{':
+        comment();
+        goto again;
+    case '.':
+        return TOK_DOT;
+    case '=':
+        return TOK_EQUAL;
+    case ',':
+        return TOK_COMMA;
+    case ';':
+        return TOK_SEMICOLON;
+    case '#':
+        return TOK_HASH;
+    case '<':
+        return TOK_LESSTHAN;
+    case '>':
+        return TOK_GREATERTHAN;
+    case '+':
+        return TOK_PLUS;
+    case '-':
+        return TOK_MINUS;
+    case '*':
+        return TOK_MULTIPLY;
+    case '/':
+        return TOK_DIVIDE;
+    case '(':
+        return TOK_LPAREN;
+    case ')':
+        return TOK_RPAREN;
+    case ':':
+        if (*++raw != '=') // 下一位字符必须是=
+            error("unknown token: ':%c'", *raw);
+        return TOK_ASSIGN;
+    case '\0':
+        return 0;
+    default:
+        error("unknown token: '%c'", *raw);
+    }
+}
+```
 
 如果我们看到 `{` 那么我们知道我们已经进入了注释相关的语句，所以应该进入`comment()`函数。 该函数读取缓冲区的字符，直到到达 `}`，这表示注释结束。 即便如此，我们仍然需要计算行数，所以如果在注释语句中看到换行符`\n`，行数应该增加。
 
@@ -366,3 +415,4 @@ void parse(void)
 
 上面就是我们的词法分析器所做的一切了。为了验证词法分析器是否有效，将创建一个parse()函数，它输出一行中的一个token，以及该token的行号以及数字形式的token类型的值。
 
+本文的完整代码可以在这里找到 [lexer](https://github.com/helintongh/pl0_pure_c/commit/5f0c72347481a40a884285cdba79b7d96f28fc70)
