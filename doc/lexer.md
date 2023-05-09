@@ -416,3 +416,41 @@ switch (*raw) {
 上面就是我们的词法分析器所做的一切了。为了验证词法分析器是否有效，将创建一个parse()函数，它输出一行中的一个token，以及该token的行号以及数字形式的token类型的值。
 
 本文的完整代码可以在这里找到 [lexer](https://github.com/helintongh/pl0_pure_c/commit/5f0c72347481a40a884285cdba79b7d96f28fc70)
+
+## 词法分析器使用
+
+实现了词法分析器后，会输出pl0源文件的代码生成的token。
+
+下面看下如何使用当前应用。
+
+0003.pl0代码如下
+
+```pascal
+{ 0003: multiple constants }
+const one = 1, two = 2;
+
+.
+```
+
+```
+./pl0_c tests/0003.pl0
+```
+
+输出为：
+
+```
+2|67	const
+2|73	one
+2|61	=
+2|78	1
+2|44	,
+2|73	two
+2|61	=
+2|78	2
+2|59	;
+4|46	.
+```
+
+可以看到输出了代码token所在行而`|`后代表该token所用的标识类型(其中const是`C`转为ASCII码即为67)。然后`one`是变量名对应的token类型的是`TOK_IDENT`其值是`I`其ASCII码为73。
+
+所有的变量名皆为`TOK_IDENT`类型。
