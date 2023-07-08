@@ -415,6 +415,157 @@ void block()
 
 虽然有procedure的规则，但procedure语法不接受任何参数，也不返回任何值。它们相当于C语言中不接受参数的void函数`void procedure()`。
 
-## 处理逻辑或(or)语法
+## 处理statement语法
 
-语句规则有多种可能性。每种可能性都用一个“或”隔开。为了弄清楚该怎么做，我们必须查看每种可能性中的第一个标记。我们正在寻找的是，每一种可能性都是从不同的标记开始的。如果不是这种情况，我们可能不得不重写受影响的可能性，直到我们达到每个可能性以不同的标记开始的点。我们是幸运的，或者可能是沃思博士故意这样做的(这是故意的)，因为每种可能性都是从不同的符号开始的。这很适合使用switch语句。这里的处理|意味着在第一个令牌上执行一个switch语句，每种可能性都有自己的情况。
+
+statement的BNF语法规则如下：
+```
+statement = [ ident ":=" expression | "call" ident 
+              | "?" ident | "!" expression 
+              | "begin" statement {";" statement } "end" 
+              | "if" condition "then" statement 
+              | "while" condition "do" statement ];
+```
+
+语句(statement)规则有多种情况。每种情况都用一个`|`符号隔开。为了弄清楚完整语义，必须查看每种情况中的第一个token。每一种情况都是从不同的token开始的。如果不是这种情况，那实现就非常困难了。因为每种情况都是从不同的符号开始的。这很适合使用switch语句。这里的处理`|`意味着在第一个token上执行一个`switch`语句。
+
+statement的函数可以为:
+
+```c
+void statement()
+{
+	switch (type) {
+	case TOK_IDENT:
+		expect(TOK_IDENT);
+		expect(TOK_ASSIGN);
+		expression();
+		break;
+	case TOK_CALL:
+		expect(TOK_CALL);
+		expect(TOK_IDENT);
+		break;
+	case TOK_BEGIN:
+		expect(TOK_BEGIN);
+		statement();
+		while (type == TOK_SEMICOLON) {
+			expect(TOK_SEMICOLON);
+			statement();
+		}
+		expect(TOK_END);
+		break;
+	case TOK_IF:
+		expect(TOK_IF);
+		condition();
+		expect(TOK_THEN);
+		statement();
+		break;
+	case TOK_WHILE:
+		expect(TOK_WHILE);
+		condition();
+		expect(TOK_DO);
+		statement();
+	}
+}
+```
+
+请注意，`switch...case...`没有`default`情况。这是因为存在空语句。
+
+## 进一步下降处理
+
+```
+condition = "odd" expression |
+            expression ("="|"#"|"<"|"<="|">"|">=") expression ;
+
+expression = [ "+"|"-"] term { ("+"|"-") term};
+
+term = factor {("*"|"/") factor};
+
+factor = ident | number | "(" expression ")";
+```
+
+完成了`statement()`函数解析语句规则后，`statement()`函数内部就还剩下了两个函数没有实现：`expression()`表达式规则和`condition()`条件表达式规则这两个没有解析了。
+
+下面先解析条件表达式，即实现`condition()`函数。
+
+condition规则有两种情况，和statement规则类似，每种以不同的token开始。
+
+由于只有两种情况，用`if`语句实现即可。另外由于不是`TOK_ODD`token则就为运算符token。
+
+那么实现如下:
+
+```c
+void condition()
+{
+	if (type == TOK_ODD) {
+		expect(TOK_ODD);
+		expression();
+	} else {
+		expression();
+
+		switch (type) {
+		case TOK_EQUAL:
+		case TOK_HASH:
+		case TOK_LESSTHAN:
+		case TOK_GREATERTHAN:
+			next();
+			break;
+		default:
+			error("invalid conditional");
+		}
+
+		expression();
+	}
+}
+```
+
+接着来实现`expression()`函数从而实现表达式规则。实现表达式规则的同时需要实现`term`项规则(在C语言或任意语言中项意味着基本元素如常量，变量和运算符以及括号等)和factor因子规则(因子就是用于表示一组数据中的类别，可以记录这组数据中的类别名称及类别数目。)
+
+```c
+void factor()
+{
+	switch (type) {
+	case TOK_IDENT:
+	case TOK_NUMBER:
+		next();
+		break;
+	case TOK_LPAREN:
+		expect(TOK_LPAREN);
+		expression();
+		expect(TOK_RPAREN);
+	}
+}
+
+void term()
+{
+	factor();
+
+	while (type == TOK_MULTIPLY || type == TOK_DIVIDE) {
+		next();
+		factor();
+	}
+}
+
+void expression(void)
+{
+
+	if (type == TOK_PLUS || type == TOK_MINUS)
+		next();
+
+	term();
+
+	while (type == TOK_PLUS || type == TOK_MINUS) {
+		next();
+		term();
+	}
+}
+```
+
+## 解析器总结
+
+ PL/0编译器就有了一个完整的前端。我们应该能够使用我们的前端作为验证器，因为它应该接受所有有效的PL/0代码并拒绝所有无效的PL/0代码。
+
+## 完整代码
+
+[on github](https://github.com/helintongh/pl0_pure_c/tree/1aa22bb80a686f2bcb24301f839211255d2b09f1)
+
+与上一章实现的diff在，[diff](https://github.com/helintongh/pl0_pure_c/commit/1aa22bb80a686f2bcb24301f839211255d2b09f1)
