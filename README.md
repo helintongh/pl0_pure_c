@@ -8,3 +8,5 @@ pl0 compiler writen in C.
 [2.PL/0基础语法以及实现其编译器思路](./doc/pl0_intro.md)
 
 [3.PL/0词法分析器实现](./doc/lexer.md)
+
+[4.PL/0解析器实现(语法分析和语义分析)](./doc/parser.md)
