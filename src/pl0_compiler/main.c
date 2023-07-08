@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "global_vars.h"
 #include "lexer.h"
+#include "parser.h"
 /*
  * pl0_compiler -- PL/0 compiler.
  * 
