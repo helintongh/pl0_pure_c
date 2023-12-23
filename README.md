@@ -12,3 +12,5 @@ pl0 compiler writen in C.
 [4.PL/0解析器实现(语法分析和语义分析)](./doc/parser.md)
 
 [5.测试框架实现](./doc/test_script.md)
+
+[6.PL/0代码生成](./doc/code_generator.md)
