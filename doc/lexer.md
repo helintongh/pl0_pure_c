@@ -320,7 +320,7 @@ void parse(void)
 			fputc(type, stdout);
 			break;
 		case TOK_ASSIGN:
-			(fputs(":=", stdout);
+			fputs(":=", stdout);
 		}
 		fputc('\n', stdout);
 	}
@@ -400,7 +400,6 @@ switch (*raw) {
     default:
         error("unknown token: '%c'", *raw);
     }
-}
 ```
 
 如果我们看到 `{` 那么我们知道我们已经进入了注释相关的语句，所以应该进入`comment()`函数。 该函数读取缓冲区的字符，直到到达 `}`，这表示注释结束。 即便如此，我们仍然需要计算行数，所以如果在注释语句中看到换行符`\n`，行数应该增加。
