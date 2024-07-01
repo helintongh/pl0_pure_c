@@ -21,6 +21,8 @@ int main(int argc, char **argv)
     readin(argv[1]);
     start_position = raw;
 
+    init_symtab();
+
     parse();
     free(start_position);
 
